@@ -1,0 +1,38 @@
+*.iml
+.gradle
+/local.properties
+/.idea/caches
+/.idea/libraries
+/.idea/modules.xml
+/.idea/workspace.xml
+/.idea/navEditor.xml
+/.idea/assetWizardSettings.xml
+.DS_Store
+/build
+/captures
+.externalNativeBuild
+.cxx
+local.properties
+
+# Jetpack Compose Previews
+*.pb
+
+# Kotlin-specific
+*.kotlin_module
+
+# Archivos generados por el sistema operativo
+Thumbs.db
+*.swp
+*~
+
+# Claves y firmas
+*.jks
+*.keystore
+key.properties
+
+# Artifacts
+*.apk
+*.aab
+
+# Logs u otros temporales
+*.log
