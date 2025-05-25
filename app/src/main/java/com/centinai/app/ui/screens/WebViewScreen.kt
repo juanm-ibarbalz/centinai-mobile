@@ -2,11 +2,13 @@ package com.centinai.app.ui.screens
 
 import android.annotation.SuppressLint
 import android.graphics.Bitmap
+import android.view.ViewGroup
 import android.webkit.WebResourceError
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -55,9 +57,27 @@ fun WebViewScreen(modifier: Modifier = Modifier) {
             )
         } else {
             AndroidView(
+                modifier = Modifier
+                    .fillMaxSize(),
                 factory = { context ->
                     WebView(context).apply {
+                        layoutParams = ViewGroup.LayoutParams(
+                            ViewGroup.LayoutParams.MATCH_PARENT,
+                            ViewGroup.LayoutParams.MATCH_PARENT
+                        )
                         settings.javaScriptEnabled = true
+                        settings.domStorageEnabled = true
+                        settings.allowFileAccess = true
+
+                        settings.useWideViewPort = true
+                        settings.loadWithOverviewMode = true
+
+                        // Evita que parezca un navegador quitando los controles de zoom
+                        settings.builtInZoomControls = false
+                        settings.displayZoomControls = false
+
+                        settings.userAgentString =
+                            "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.101 Mobile Safari/537.36"
 
                         webViewClient = object : WebViewClient() {
                             override fun onPageStarted(
@@ -82,7 +102,7 @@ fun WebViewScreen(modifier: Modifier = Modifier) {
                             }
                         }
 
-                        loadUrl("https://www.google.com") // TEMPORAL: usaremos CentinAI después
+                        loadUrl("https://centinai-45dyjf5tn-juan-martins-projects-34a1b490.vercel.app")
                     }
                 }
             )
