@@ -1,12 +1,9 @@
 package com.centinai.app.ui.screens
 
 import android.annotation.SuppressLint
-import android.graphics.Bitmap
+import android.util.Log
 import android.view.ViewGroup
-import android.webkit.WebResourceError
-import android.webkit.WebResourceRequest
 import android.webkit.WebView
-import android.webkit.WebViewClient
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.CircularProgressIndicator
@@ -15,52 +12,50 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.platform.LocalContext
+import com.centinai.app.utils.Constants
 import com.centinai.app.utils.isConnected
+import com.centinai.app.utils.TokenBridge
+import com.centinai.app.utils.buildCentinaiWebClient
+import com.centinai.app.viewmodel.WebLoadViewModel
 
 
 @SuppressLint("SetJavaScriptEnabled")
 @Composable
-fun WebViewScreen(modifier: Modifier = Modifier) {
-    var isLoading by remember { mutableStateOf(true) }
-    var hasError by remember { mutableStateOf(false) }
+fun WebViewScreen(
+    modifier: Modifier = Modifier,
+    startUrl: String = Constants.APP_WEB_URL,
+    viewModel: WebLoadViewModel
+) {
     val context = LocalContext.current
-    var errorMessage by remember { mutableStateOf("No se pudo cargar la página") }
 
     LaunchedEffect(Unit) {
         if (!isConnected(context)) {
-            errorMessage = "Sin conexión a internet"
-            hasError = true
-            isLoading = false
+            viewModel.reportError("Sin conexión a internet")
         }
     }
 
-
     Box(modifier = modifier) {
-        if (hasError) {
+        if (viewModel.hasError) {
             ErrorScreen(
-                message = errorMessage,
+                message = viewModel.errorMessage ?: "Error al cargar la página",
                 onRetry = {
                     if (isConnected(context)) {
-                        hasError = false
-                        isLoading = true
+                        viewModel.reset()
                     } else {
-                        errorMessage = "Sin conexión a internet"
-                        hasError = true
-                        isLoading = false
+                        viewModel.reportError("Sin conexión a internet")
                     }
                 }
             )
         } else {
             AndroidView(
-                modifier = Modifier
-                    .fillMaxSize(),
-                factory = { context ->
-                    WebView(context).apply {
+                modifier = Modifier.fillMaxSize(),
+                factory = { ctx ->
+                    WebView(ctx).apply {
                         layoutParams = ViewGroup.LayoutParams(
                             ViewGroup.LayoutParams.MATCH_PARENT,
                             ViewGroup.LayoutParams.MATCH_PARENT
@@ -68,47 +63,29 @@ fun WebViewScreen(modifier: Modifier = Modifier) {
                         settings.javaScriptEnabled = true
                         settings.domStorageEnabled = true
                         settings.allowFileAccess = true
-
                         settings.useWideViewPort = true
                         settings.loadWithOverviewMode = true
-
-                        // Evita que parezca un navegador quitando los controles de zoom
                         settings.builtInZoomControls = false
                         settings.displayZoomControls = false
-
                         settings.userAgentString =
                             "Mozilla/5.0 (Linux; Android 10; Mobile) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/87.0.4280.101 Mobile Safari/537.36"
 
-                        webViewClient = object : WebViewClient() {
-                            override fun onPageStarted(
-                                view: WebView?,
-                                url: String?,
-                                favicon: Bitmap?
-                            ) {
-                                isLoading = true
-                            }
+                        addJavascriptInterface(TokenBridge(context), "Android")
 
-                            override fun onPageFinished(view: WebView?, url: String?) {
-                                isLoading = false
-                            }
+                        webViewClient = buildCentinaiWebClient(
+                            context = context,
+                            viewModel = viewModel
+                        )
 
-                            override fun onReceivedError(
-                                view: WebView?,
-                                request: WebResourceRequest?,
-                                error: WebResourceError?
-                            ) {
-                                hasError = true
-                                isLoading = false
-                            }
-                        }
-
-                        loadUrl("https://centinai-45dyjf5tn-juan-martins-projects-34a1b490.vercel.app")
+                        Log.d("WebViewScreen", "🌐 Intentando cargar URL: $startUrl")
+                        loadUrl(startUrl)
                     }
                 }
             )
-        }
-        if (isLoading && !hasError) {
-            CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+
+            if (!viewModel.isWebLoaded) {
+                CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
+            }
         }
     }
 }
