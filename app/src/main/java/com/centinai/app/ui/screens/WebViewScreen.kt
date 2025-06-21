@@ -88,7 +88,7 @@ fun WebViewScreen(
                         }
 
                         Log.d("WebViewScreen_Setup", "Inyectando TokenBridge como 'Android'")
-                        addJavascriptInterface(tokenBridge, "Android") // Usar la instancia recordada
+                        //addJavascriptInterface(tokenBridge, "Android") // Usar la instancia recordada
                         Log.d("WebViewScreen_Setup", "TokenBridge debería estar inyectado.")
 
                         // Pasar la instancia del WebView al TokenBridge
