@@ -22,7 +22,6 @@ import com.centinai.app.viewmodel.WebLoadViewModel
 fun SplashScreen(navController: NavController, viewModel: WebLoadViewModel) {
     var visible by remember { mutableStateOf(true) }
 
-    // Animar salida según el estado del viewModel
     LaunchedEffect(viewModel.isWebLoaded, viewModel.hasError) {
         Log.d("SplashScreen", "🔥 Effect triggered - isWebLoaded=${viewModel.isWebLoaded}, hasError=${viewModel.hasError}")
 

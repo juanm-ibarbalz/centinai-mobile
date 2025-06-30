@@ -3,10 +3,10 @@ package com.centinai.app.utils
 import android.content.Context
 import android.util.Log
 import android.webkit.JavascriptInterface
-import android.webkit.WebView // Necesario para la referencia
+import android.webkit.WebView
 import android.widget.Toast
 
-class TokenBridge(private val appContext: Context) { // Renombrado a appContext para claridad
+class TokenBridge(private val appContext: Context) {
 
     private val tokenManager = TokenManager.getInstance(appContext)
     private var webViewInstance: WebView? = null
@@ -17,9 +17,6 @@ class TokenBridge(private val appContext: Context) { // Renombrado a appContext 
     fun setWebView(webView: WebView) {
         Log.d("TokenBridge", "setWebView llamado. WebView hasWindowFocus: ${webView.hasWindowFocus()}")
         this.webViewInstance = webView
-        // Si había un token pendiente y la web ya notificó que está lista (o asumimos que está lista al setearla), inyectarlo.
-        // O mejor, esperar a que webViewReadyForToken sea llamado explícitamente.
-        // Consideraremos inyectar si webViewReadyForToken ya fue llamado previamente.
         if (isWebViewReadyForToken && pendingTokenToInject != null) {
             injectPendingToken()
         }
@@ -31,7 +28,7 @@ class TokenBridge(private val appContext: Context) { // Renombrado a appContext 
                 val escapedToken = token.replace("\\", "\\\\").replace("'", "\\'")
                 val script = "javascript:if(typeof window.handleNativeToken === 'function') { window.handleNativeToken('$escapedToken'); console.log('CentinaiApp (JS): handleNativeToken fue llamada con token (pendiente).'); } else { console.warn('CentinaiApp (JS WARN Late): window.handleNativeToken no está definido en la web.'); }"
                 Log.d("TokenBridge", "Inyectando token pendiente a webView: $token")
-                wv.post { // Es más seguro ejecutar JS en el hilo UI del WebView
+                wv.post {
                     wv.evaluateJavascript(script, null)
                 }
                 pendingTokenToInject = null // Limpiar token pendiente
@@ -69,7 +66,6 @@ class TokenBridge(private val appContext: Context) { // Renombrado a appContext 
     @JavascriptInterface
     fun showToast(message: String) {
         Log.d("TokenBridge", "showToast llamado desde JS con mensaje: $message")
-        // Asegurarse de mostrar el Toast en el hilo UI
         webViewInstance?.post {
             Toast.makeText(appContext, message, Toast.LENGTH_LONG).show()
         }
@@ -87,7 +83,7 @@ class TokenBridge(private val appContext: Context) { // Renombrado a appContext 
                 val escapedToken = storedToken.replace("\\", "\\\\").replace("'", "\\'")
                 val script = "javascript:if(typeof window.handleNativeToken === 'function') { window.handleNativeToken('$escapedToken'); console.log('CentinaiApp (JS): handleNativeToken fue llamada con token (vía webViewReady).'); } else { console.warn('CentinaiApp (JS WARN): window.handleNativeToken no definido al llamar desde webViewReady.'); }"
                 Log.d("TokenBridge", "Inyectando token a webView (vía webViewReady): $storedToken")
-                webViewInstance?.post { // Ejecutar en el hilo UI del WebView
+                webViewInstance?.post {
                     webViewInstance?.evaluateJavascript(script, null)
                 }
             } else {
@@ -96,10 +92,6 @@ class TokenBridge(private val appContext: Context) { // Renombrado a appContext 
             }
         } else {
             Log.d("TokenBridge", "webViewReadyForToken: No hay token almacenado para inyectar.")
-            // Opcional: notificar a la web que no hay token, aunque el timeout de la promesa en JS debería manejarlo
-            // webViewInstance?.post {
-            //    webViewInstance?.evaluateJavascript("javascript:if(typeof window.handleNativeToken === 'function') { window.handleNativeToken(null); }", null)
-            // }
         }
     }
 }
